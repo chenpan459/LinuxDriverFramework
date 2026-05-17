@@ -1,21 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0
-#
-#   make
-#   sudo insmod nv_pci_demo.ko
-#   # With QEMU: -device edu
 
-KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
-PWD        := $(shell pwd)
+.PHONY: all driver app clean
 
-ccflags-y += -I$(src)/include
+all: driver app
 
-obj-m := nv_pci_demo.o
-nv_pci_demo-y := examples/nv_pci_demo.o core/nv_pci.o
+driver:
+	$(MAKE) -C driver
 
-.PHONY: all clean
-
-all:
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules
+app:
+	$(MAKE) -C app
 
 clean:
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
+	$(MAKE) -C driver clean
+	$(MAKE) -C app clean

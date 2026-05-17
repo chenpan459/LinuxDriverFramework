@@ -1,30 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0
 
-KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
-PWD        := $(shell pwd)
+.PHONY: all driver app clean
 
-ccflags-y += -I$(src)/include
+all: driver app
 
-obj-m += nv_char_echo.o
-obj-m += nv_char_demo.o
-obj-m += nv_char_plat.o
-obj-m += nv_char_misc_echo.o
-obj-m += nv_char_selftest.o
+driver:
+	$(MAKE) -C driver
 
-nv_char_echo-y := examples/nv_char_echo.o core/nv_char.o
-nv_char_demo-y := examples/nv_char_demo.o core/nv_char.o
-nv_char_plat-y := examples/nv_char_plat.o core/nv_char.o
-nv_char_misc_echo-y := examples/nv_char_misc_echo.o core/nv_char.o
-nv_char_selftest-y := examples/nv_char_selftest.o core/nv_char.o
-
-.PHONY: all clean
-
-all:
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules
+app:
+	$(MAKE) -C app
 
 clean:
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
-
-# Tracepoints (when CONFIG_TRACING=y):
-#   sudo cat /sys/kernel/tracing/events/nv_char/enable
-#   echo 1 | sudo tee /sys/kernel/tracing/events/nv_char/enable
+	$(MAKE) -C driver clean
+	$(MAKE) -C app clean

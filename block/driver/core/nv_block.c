@@ -11,6 +11,10 @@
 
 #include "nv_block.h"
 
+#ifndef BLK_DEF_MAX_SECTORS_CAP
+#define BLK_DEF_MAX_SECTORS_CAP BLK_SAFE_MAX_SECTORS
+#endif
+
 static struct nv_block_dev *nv_block_dev_from_disk(struct gendisk *disk)
 {
 	return disk->private_data;
