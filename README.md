@@ -17,6 +17,9 @@ LinuxDriverFramework/
 ├── i2c/
 ├── spi/
 ├── uart/
+├── pwm/
+├── can/
+├── adc/
 └── Makefile
 ```
 
@@ -53,6 +56,9 @@ sudo rmmod nv_block_ram
 | i2c | `driver/nv_i2c_demo.ko` | `app/bin/nv_test_i2c` |
 | spi | `driver/nv_spi_demo.ko` | `app/bin/nv_test_spi` |
 | uart | `driver/nv_uart_demo.ko` | `app/bin/nv_test_uart` → `/dev/ttyNV0` |
+| pwm | `driver/nv_pwm_demo.ko` | `app/bin/nv_test_pwm` → sysfs |
+| can | `driver/nv_can_demo.ko` | `app/bin/nv_test_can` → `nvcan0` |
+| adc | `driver/nv_adc_demo.ko` | `app/bin/nv_test_adc` → IIO sysfs |
 
 ## 环境
 
