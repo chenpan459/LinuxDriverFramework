@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Example: minimal echo character device using nv_char framework
- *
- * Load:  insmod nv_char_echo.ko
- * Test:   echo hello > /dev/nv_echo
- *         cat /dev/nv_echo
- * Unload: rmmod nv_char_echo
+ * Example: echo character device using nv_char framework
  */
 
 #include <linux/errno.h>
@@ -66,7 +61,7 @@ static ssize_t echo_write(struct nv_char_dev *dev, struct file *filp,
 			  const char __user *buf, size_t count, loff_t *ppos)
 {
 	struct echo_priv *priv = dev->priv;
-	size_t len;
+	ssize_t ret;
 
 	if (!priv)
 		return -EINVAL;
@@ -76,15 +71,17 @@ static ssize_t echo_write(struct nv_char_dev *dev, struct file *filp,
 
 	mutex_lock(&priv->lock);
 	if (copy_from_user(priv->buf, buf, count)) {
-		mutex_unlock(&priv->lock);
-		return -EFAULT;
+		ret = -EFAULT;
+		goto out;
 	}
 
 	priv->len = count;
-	*ppos = 0;
-	len = count;
+	*ppos = count;
+	ret = count;
+	nv_char_wake(dev);
+out:
 	mutex_unlock(&priv->lock);
-	return len;
+	return ret;
 }
 
 static const struct nv_char_ops echo_ops = {
@@ -104,17 +101,20 @@ static int __init echo_init(void)
 	echo_driver.name = "nv_char_echo";
 	echo_driver.owner = THIS_MODULE;
 	echo_driver.count = 1;
+	echo_driver.dev_mode = 0660;
 
 	ret = nv_char_driver_register(&echo_driver);
 	if (ret)
 		goto err_buf;
 
 	ret = nv_char_device_register(&echo_driver, &echo_dev, 0,
-				       ECHO_DEV_NAME, &echo_ops, &echo_data);
+				      ECHO_DEV_NAME, &echo_ops, &echo_data);
 	if (ret)
 		goto err_drv;
 
-	pr_info("nv_char_echo: ready (/dev/%s)\n", ECHO_DEV_NAME);
+	pr_info("nv_char_echo: cdev ready major=%u minor=%u /dev/%s\n",
+		nv_char_dev_major(&echo_dev), nv_char_dev_minor(&echo_dev),
+		ECHO_DEV_NAME);
 	return 0;
 
 err_drv:

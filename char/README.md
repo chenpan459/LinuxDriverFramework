@@ -1,87 +1,89 @@
-# nv_char — 字符设备驱动框架
+# nv_char — 字符设备驱动框架（cdev）
 
-封装 `cdev`、`alloc_chrdev_region`、`class_create`、`device_create` 及 `file_operations` 分发，驱动只需实现 `nv_char_ops` 回调。
+Linux 字符设备框架：cdev、安全卸载、ioctl/poll、debugfs、tracepoint、devm、platform、miscdevice。
 
 ## 目录结构
 
 ```
 char/
-├── include/nv_char.h      # 公共 API
-├── core/nv_char.c         # 框架实现
-├── examples/nv_char_echo.c # 示例：内存 echo 设备
+├── include/
+│   ├── nv_char.h
+│   └── trace/events/nv_char.h   # tracepoint 定义
+├── core/nv_char.c
+├── examples/
+│   ├── nv_char_echo.c
+│   ├── nv_char_demo.c
+│   ├── nv_char_plat.c          # platform + devm
+│   ├── nv_char_misc_echo.c
+│   └── nv_char_selftest.c      # 加载即自检
 └── Makefile
 ```
 
-## 编译
+## 示例模块
+
+| 模块 | 能力 |
+|------|------|
+| `nv_char_echo.ko` | 标准 cdev |
+| `nv_char_demo.ko` | poll + ioctl 表 |
+| `nv_char_plat.ko` | platform + **devm** + OF `nv,char-plat` |
+| `nv_char_misc_echo.ko` | miscdevice |
+| `nv_char_selftest.ko` | 注册/设备号自检 |
+
+## 编译与测试
 
 ```bash
-cd char
-make
+cd char && make
+
+sudo insmod nv_char_selftest.ko    # dmesg 应见 PASS
+sudo rmmod nv_char_selftest
+
+sudo insmod nv_char_plat.ko
+echo hi > /dev/nv_plat && cat /dev/nv_plat
+sudo rmmod nv_char_plat
 ```
 
-生成 `nv_char_echo.ko`（内含 `core/nv_char.o`）。
+## devm（platform 推荐）
 
-## 测试示例
+```c
+/* probe */
+nv_char_driver_register_devm(&pdev->dev, &drv);
+nv_char_device_register_parent(&drv, &dev, 0, "nv_plat", &ops, priv,
+                               &pdev->dev);
+
+/* remove */
+nv_char_device_unregister(&dev);
+nv_char_driver_unregister_devm(&drv);
+/* chrdev 区与 class 在 device 解绑时由 devm 自动释放 */
+```
+
+## Tracepoint
+
+需内核 `CONFIG_TRACING=y`：
 
 ```bash
 sudo insmod nv_char_echo.ko
+echo 1 | sudo tee /sys/kernel/tracing/events/nv_char/enable
 echo hello > /dev/nv_echo
-cat /dev/nv_echo
-sudo rmmod nv_char_echo
+cat /sys/kernel/tracing/trace | grep nv_char
 ```
 
-## API 概览
+事件：`nv_char_register`、`nv_char_unregister`、`nv_char_open`、`nv_char_release`。
 
-| 函数 | 说明 |
-|------|------|
-| `nv_char_driver_register()` | 分配主设备号、创建 class |
-| `nv_char_driver_unregister()` | 注销驱动，并卸载其下所有设备 |
-| `nv_char_device_register()` | 注册单个字符设备 → `/dev/<name>` |
-| `nv_char_device_unregister()` | 注销单个设备 |
+## debugfs
 
-### 数据结构
+`/sys/kernel/debug/nv_char/<device>/` → `opens`、`removing`、`devt`
 
-- **`nv_char_driver`**：驱动级（`name`、`owner`、`count`、主设备号、class）
-- **`nv_char_dev`**：设备实例（`cdev`、`device`、`priv`）
-- **`nv_char_ops`**：可选回调：`open`、`release`、`read`、`write`、`unlocked_ioctl`、`compat_ioctl`、`poll`、`llseek`
+## API 摘要
 
-未实现的回调有默认行为（例如未提供 `read`/`write` 返回 `-ENODEV`）。
+| API | 说明 |
+|-----|------|
+| `nv_char_driver_register` / `_unregister` | 手动管理 |
+| `nv_char_driver_register_devm` / `_unregister_devm` | 绑定 `struct device` |
+| `nv_char_device_register_parent` | 指定 parent（platform） |
+| `nv_char_misc_register` | miscdevice |
+| `nv_char_ioctl_dispatch` | ioctl 表 |
+| `nv_char_wake` | 唤醒 poll |
 
-## 编写新驱动
+## 许可证
 
-```c
-#include "nv_char.h"
-
-static struct nv_char_driver my_drv;
-static struct nv_char_dev my_dev;
-
-static const struct nv_char_ops my_ops = {
-    .read  = my_read,
-    .write = my_write,
-};
-
-static int __init my_init(void)
-{
-    my_drv.name = "my_char_drv";
-    my_drv.owner = THIS_MODULE;
-    my_drv.count = 1;
-
-    nv_char_driver_register(&my_drv);
-    return nv_char_device_register(&my_drv, &my_dev, 0,
-                                   "my_dev", &my_ops, priv);
-}
-```
-
-`Makefile` 中将 `core/nv_char.o` 链入你的模块：
-
-```makefile
-obj-m := my_driver.o
-my_driver-y := my_driver.o core/nv_char.o
-ccflags-y += -I$(src)/include
-```
-
-## 清理
-
-```bash
-make clean
-```
+GPL-2.0
