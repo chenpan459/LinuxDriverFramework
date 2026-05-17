@@ -1,0 +1,20 @@
+# Kernel module build artifacts (out-of-tree kbuild)
+*.ko
+*.o
+*.mod
+*.mod.c
+*.mod.o
+*.cmd
+.*.cmd
+modules.order
+Module.symvers
+.tmp_versions/
+
+# BTF / debug
+*.btf
+
+# Editor / OS
+*~
+*.swp
+.vscode/
+.idea/
