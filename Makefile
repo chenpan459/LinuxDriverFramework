@@ -5,7 +5,7 @@
 #   make app      # 仅用户态应用
 #   make clean
 
-SUBDIRS := char block net pci usb
+SUBDIRS := char block net pci usb i2c spi uart
 
 .PHONY: all driver app clean $(SUBDIRS)
 

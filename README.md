@@ -14,6 +14,9 @@ LinuxDriverFramework/
 ├── net/
 ├── pci/
 ├── usb/
+├── i2c/
+├── spi/
+├── uart/
 └── Makefile
 ```
 
@@ -47,6 +50,9 @@ sudo rmmod nv_block_ram
 | net | `driver/nv_net_dummy.ko` | `app/bin/nv_test_net` |
 | pci | `driver/nv_pci_demo.ko` | `app/bin/nv_test_pci` |
 | usb | `driver/nv_usb_demo.ko` | `app/bin/nv_test_usb` |
+| i2c | `driver/nv_i2c_demo.ko` | `app/bin/nv_test_i2c` |
+| spi | `driver/nv_spi_demo.ko` | `app/bin/nv_test_spi` |
+| uart | `driver/nv_uart_demo.ko` | `app/bin/nv_test_uart` → `/dev/ttyNV0` |
 
 ## 环境
 
