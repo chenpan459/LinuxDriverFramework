@@ -20,6 +20,9 @@ LinuxDriverFramework/
 ├── pwm/
 ├── can/
 ├── adc/
+├── bus/
+│   ├── pci/ usb/ i2c/ spi/ uart/ can/
+│   └── sdio/          # SDIO 功能驱动框架
 └── Makefile
 ```
 
@@ -59,6 +62,7 @@ sudo rmmod nv_block_ram
 | pwm | `driver/nv_pwm_demo.ko` | `app/bin/nv_test_pwm` → sysfs |
 | can | `driver/nv_can_demo.ko` | `app/bin/nv_test_can` → `nvcan0` |
 | adc | `driver/nv_adc_demo.ko` | `app/bin/nv_test_adc` → IIO sysfs |
+| bus/sdio | `driver/nv_sdio_demo.ko` | `app/bin/nv_test_sdio` → SDIO sysfs |
 
 ## 环境
 
